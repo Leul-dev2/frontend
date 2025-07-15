@@ -1,7 +1,8 @@
 // src/api/orderApi.js
 import axios from "axios";
 
-const API_BASE_URL = "https://backend-ecomm-jol4.onrender.com/api";
+// ✅ Best practice: use env variable first, fallback second
+const API_BASE_URL = process.env.REACT_APP_API_URL || "https://backend-ecomm-jol4.onrender.com/api";
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem("token");

@@ -4,7 +4,8 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-const API_BASE = "https://backend-ecomm-jol4.onrender.com/api";
+// ✅ Best practice: use env variable first, fallback second
+const API_BASE_URL = process.env.REACT_APP_API_URL || "https://backend-ecomm-jol4.onrender.com/api";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -13,10 +14,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const validateEmail = (email) => {
-    // Simple email regex validation
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  };
+  const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -33,20 +31,17 @@ export default function Login() {
 
     setLoading(true);
     try {
-      // 1. Sign in with Firebase
+      // ✅ 1. Firebase sign in
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
+      const idToken = await userCredential.user.getIdToken();
 
-      // 2. Get Firebase ID token for backend verification
-      const idToken = await user.getIdToken();
+      // ✅ 2. Send to backend for your app's JWT
+      const res = await axios.post(`${API_BASE_URL}/auth/firebase`, { idToken });
 
-      // 3. Send token to backend to get your JWT
-      const res = await axios.post(`${API_BASE}/auth/firebase`, { idToken });
-
-      // 4. Save JWT for authenticated requests
+      // ✅ 3. Store JWT securely (for now, localStorage is fine)
       localStorage.setItem("token", res.data.token);
 
-      // 5. Navigate to protected route
+      // ✅ 4. Redirect to your protected page
       navigate("/products");
     } catch (err) {
       console.error(err);
