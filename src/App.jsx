@@ -1,12 +1,12 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Sidebar from "./components/sidebar";
+import Sidebar from "./components/Sidebar";
 import Login from "./pages/Login";
 import Products from "./pages/Products";
 import AddProduct from "./pages/AddProduct";
 import EditProduct from "./pages/EditProduct";
 import Orders from "./pages/Orders";
 import Dashboard from "./pages/Dashboard"; // ✅ You forgot to import this
-import ProtectedRoute from "./components/protectedRoute";
+import ProtectedRoute from './components/ProtectedRoute';
 import CategoryManagement from "./pages/CategoryManagement";
 
 function App() {
