@@ -2,10 +2,10 @@
 import axios from "axios";
 
 // ✅ Best practice: use env variable first, fallback second
-const API_BASE_URL = process.env.REACT_APP_API_URL || "https://backend-ecomm-jol4.onrender.com/api"; // or your backend URL
+const API_BASE_URL = process.env.REACT_APP_API_URL || "https://backend-ecomm-jol4.onrender.com/api";
 
 const instance = axios.create({
-  baseURL: API_BASE,
+  baseURL: API_BASE_URL,
 });
 
 // Add JWT token to all requests automatically
