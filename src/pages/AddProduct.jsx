@@ -1,34 +1,38 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { getProduct, updateProduct } from "../api/productApi";
+import { useNavigate } from "react-router-dom";
+import { createProduct } from "../api/productApi";
+import { getCategories } from "../api/categoryApi"; // ✅ import this!
 
-export default function EditProduct() {
-  const { sku } = useParams();
-  const [form, setForm] = useState(null);
+export default function AddProduct() {
+  const [form, setForm] = useState({
+    sku: "",
+    title: "",
+    brandName: "",
+    image: "",
+    price: "",
+    priceAfterDiscount: "",
+    discountPercent: "",
+    description: "",
+    rating: "",
+    categoryTitle: "", // ✅ new field!
+  });
+
+  const [categories, setCategories] = useState([]); // ✅ store categories
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  // ✅ Fetch categories on mount
   useEffect(() => {
-    async function fetchProduct() {
+    const fetch = async () => {
       try {
-        const product = await getProduct(sku);
-        setForm({
-          sku: product.sku,
-          title: product.title,
-          brandName: product.brandName,
-          image: product.image,
-          price: product.price,
-          priceAfterDiscount: product.priceAfterDiscount || "",
-          discountPercent: product.discountPercent || "",
-          description: product.description || "",
-          rating: product.rating || "",
-        });
-      } catch (err) {
-        setError(err.message || "Failed to load product");
+        const data = await getCategories();
+        setCategories(data);
+      } catch {
+        setError("Failed to load categories");
       }
-    }
-    fetchProduct();
-  }, [sku]);
+    };
+    fetch();
+  }, []);
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -41,34 +45,33 @@ export default function EditProduct() {
       const productData = {
         ...form,
         price: parseFloat(form.price),
-        priceAfterDiscount:
-          form.priceAfterDiscount === "" ? undefined : parseFloat(form.priceAfterDiscount),
-        discountPercent:
-          form.discountPercent === "" ? undefined : parseFloat(form.discountPercent),
-        rating: form.rating === "" ? undefined : parseFloat(form.rating),
+        priceAfterDiscount: parseFloat(form.priceAfterDiscount) || undefined,
+        discountPercent: parseFloat(form.discountPercent) || undefined,
+        rating: parseFloat(form.rating) || undefined,
       };
-      await updateProduct(sku, productData);
+      await createProduct(productData);
       navigate("/products");
     } catch (err) {
-      setError(err.message || "Failed to update product");
+      setError(err.response?.data?.message || err.message || "Failed to add product");
     }
   };
 
-  if (!form) return <div>Loading product data...</div>;
-
   return (
     <div className="p-8 max-w-xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Edit Product: {sku}</h1>
+      <h1 className="text-2xl font-bold mb-6">Add New Product</h1>
 
       {error && <div className="mb-4 text-red-600">{error}</div>}
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Same fields as before */}
         <input
           type="text"
           name="sku"
+          placeholder="SKU"
           value={form.sku}
-          disabled
-          className="w-full p-2 border rounded bg-gray-200 cursor-not-allowed"
+          onChange={handleChange}
+          required
+          className="w-full p-2 border rounded"
         />
         <input
           type="text"
@@ -97,6 +100,23 @@ export default function EditProduct() {
           required
           className="w-full p-2 border rounded"
         />
+
+        {/* ✅ Category Select */}
+        <select
+          name="categoryTitle"
+          value={form.categoryTitle}
+          onChange={handleChange}
+          required
+          className="w-full p-2 border rounded"
+        >
+          <option value="">Select Category</option>
+          {categories.map((cat) => (
+            <option key={cat._id} value={cat.title}>
+              {cat.title}
+            </option>
+          ))}
+        </select>
+
         <input
           type="number"
           name="price"
@@ -153,7 +173,7 @@ export default function EditProduct() {
           type="submit"
           className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition"
         >
-          Update Product
+          Add Product
         </button>
       </form>
     </div>
