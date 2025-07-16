@@ -1,7 +1,8 @@
 // src/api/axiosInstance.js
 import axios from "axios";
 
-const API_BASE = "https://backend-ecomm-jol4.onrender.com/api"; // or your backend URL
+// ✅ Best practice: use env variable first, fallback second
+const API_BASE_URL = process.env.REACT_APP_API_URL || "https://backend-ecomm-jol4.onrender.com/api"; // or your backend URL
 
 const instance = axios.create({
   baseURL: API_BASE,
