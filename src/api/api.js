@@ -2,29 +2,28 @@
 
 import axios from "axios";
 
-// ✅ Always keep your backend URL in one place
+// ✅ Centralize your backend URL in one place
 const API_BASE_URL = process.env.REACT_APP_API_URL;
 
-
-// Example: Fetch all products
+// Fetch all products
 export const fetchProducts = async () => {
   try {
     const res = await axios.get(`${API_BASE_URL}/products`);
-    return res.data; // ✅ Return data instead of console.log
+    return res.data; // Return only the data part
   } catch (err) {
     console.error("❌ Error fetching products:", err);
-    throw err; // ✅ Let caller handle errors
+    throw err; // Propagate error to caller
   }
 };
 
-// Example: Submit a review for a product
+// Submit a review for a product
 export const submitReview = async (productId, review) => {
   try {
     const res = await axios.post(`${API_BASE_URL}/reviews`, {
       productId,
       ...review,
     });
-    return res.data; // ✅ Return data
+    return res.data; // Return the response data
   } catch (err) {
     console.error("❌ Error submitting review:", err);
     throw err;
