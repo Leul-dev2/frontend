@@ -7,6 +7,7 @@ import EditProduct from "./pages/EditProduct";
 import Orders from "./pages/Orders";
 import Dashboard from "./pages/Dashboard"; // ✅ You forgot to import this
 import ProtectedRoute from "./components/protectedRoute";
+import CategoryManagement from "./pages/CategoryManagement";
 
 function App() {
   return (
@@ -44,6 +45,19 @@ function App() {
             </ProtectedRoute>
           }
         />
+         <Route
+          path="/products/category-management"
+          element={
+            <ProtectedRoute>
+              <div className="flex min-h-screen">
+                <Sidebar />
+                <div className="flex-1 p-6">
+                  <CategoryManagement />
+                </div>
+              </div>
+            </ProtectedRoute>
+          }
+          />
         <Route
           path="/products/add"
           element={
