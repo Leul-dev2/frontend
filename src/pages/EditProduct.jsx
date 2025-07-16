@@ -1,17 +1,23 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getProduct, updateProduct } from "../api/productApi";
+import { getCategories } from "../api/categoryApi"; // ✅ import this!
 
 export default function EditProduct() {
   const { sku } = useParams();
   const [form, setForm] = useState(null);
+  const [categories, setCategories] = useState([]); // ✅ store categories
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  // ✅ Fetch product + categories
   useEffect(() => {
-    async function fetchProduct() {
+    async function fetchData() {
       try {
-        const product = await getProduct(sku);
+        const [product, cats] = await Promise.all([
+          getProduct(sku),
+          getCategories(),
+        ]);
         setForm({
           sku: product.sku,
           title: product.title,
@@ -22,12 +28,14 @@ export default function EditProduct() {
           discountPercent: product.discountPercent || "",
           description: product.description || "",
           rating: product.rating || "",
+          categoryTitle: product.category?.title || "", // ✅
         });
+        setCategories(cats);
       } catch (err) {
-        setError(err.message || "Failed to load product");
+        setError(err.message || "Failed to load product/categories");
       }
     }
-    fetchProduct();
+    fetchData();
   }, [sku]);
 
   const handleChange = (e) => {
@@ -97,6 +105,23 @@ export default function EditProduct() {
           required
           className="w-full p-2 border rounded"
         />
+
+        {/* ✅ Category Select */}
+        <select
+          name="categoryTitle"
+          value={form.categoryTitle}
+          onChange={handleChange}
+          required
+          className="w-full p-2 border rounded"
+        >
+          <option value="">Select Category</option>
+          {categories.map((cat) => (
+            <option key={cat._id} value={cat.title}>
+              {cat.title}
+            </option>
+          ))}
+        </select>
+
         <input
           type="number"
           name="price"
