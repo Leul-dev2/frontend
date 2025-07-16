@@ -46,18 +46,19 @@ function App() {
           }
         />
          <Route
-          path="/products/category-management"
-          element={
-            <ProtectedRoute>
-              <div className="flex min-h-screen">
-                <Sidebar />
-                <div className="flex-1 p-6">
-                  <CategoryManagement />
-                </div>
-              </div>
-            </ProtectedRoute>
-          }
-          />
+  path="/products/category"
+  element={
+    <ProtectedRoute>
+      <div className="flex min-h-screen">
+        <Sidebar />
+        <div className="flex-1 p-6">
+          <CategoryManagement />
+        </div>
+      </div>
+    </ProtectedRoute>
+  }
+/>
+
         <Route
           path="/products/add"
           element={
