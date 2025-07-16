@@ -21,7 +21,7 @@ export default function Sidebar() {
         <Link to="/products" className="hover:bg-blue-100 px-4 py-2 rounded transition">
           Products
         </Link>
-           <Link to="/products/category-management" className="hover:bg-blue-100 px-4 py-2 rounded transition">
+           <Link to="/products/category" className="hover:bg-blue-100 px-4 py-2 rounded transition">
   Category Management
 </Link>
 
