@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createProduct } from "../api/productApi";
-import { getCategories } from "../api/categoryApi"; // ✅ import this!
+import { getCategories } from "../api/categoryApi";
 
 export default function AddProduct() {
   const [form, setForm] = useState({
@@ -14,16 +14,18 @@ export default function AddProduct() {
     discountPercent: "",
     description: "",
     rating: "",
-    categoryTitle: "", // ✅ new field!
+    categoryTitle: "",
+    subcategoryTitle: "",
   });
 
-  const [categories, setCategories] = useState([]); // ✅ store categories
+  const [categories, setCategories] = useState([]);
+  const [subcategories, setSubcategories] = useState([]);
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  // ✅ Fetch categories on mount
+  // Fetch categories on mount
   useEffect(() => {
-    const fetch = async () => {
+    const fetchCategories = async () => {
       try {
         const data = await getCategories();
         setCategories(data);
@@ -31,8 +33,28 @@ export default function AddProduct() {
         setError("Failed to load categories");
       }
     };
-    fetch();
+    fetchCategories();
   }, []);
+
+  // Update subcategories when category changes
+  useEffect(() => {
+    if (!form.categoryTitle) {
+      setSubcategories([]);
+      setForm((prev) => ({ ...prev, subcategoryTitle: "" }));
+      return;
+    }
+
+    const selectedCategory = categories.find(
+      (cat) => cat.title === form.categoryTitle
+    );
+
+    if (selectedCategory && selectedCategory.subCategories) {
+      setSubcategories(selectedCategory.subCategories.map((sub) => sub.title));
+    } else {
+      setSubcategories([]);
+      setForm((prev) => ({ ...prev, subcategoryTitle: "" }));
+    }
+  }, [form.categoryTitle, categories]);
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -41,6 +63,7 @@ export default function AddProduct() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
     try {
       const productData = {
         ...form,
@@ -49,6 +72,11 @@ export default function AddProduct() {
         discountPercent: parseFloat(form.discountPercent) || undefined,
         rating: parseFloat(form.rating) || undefined,
       };
+
+      if (form.subcategoryTitle) {
+        productData.subcategoryTitle = form.subcategoryTitle;
+      }
+
       await createProduct(productData);
       navigate("/products");
     } catch (err) {
@@ -63,7 +91,6 @@ export default function AddProduct() {
       {error && <div className="mb-4 text-red-600">{error}</div>}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Same fields as before */}
         <input
           type="text"
           name="sku"
@@ -101,7 +128,7 @@ export default function AddProduct() {
           className="w-full p-2 border rounded"
         />
 
-        {/* ✅ Category Select */}
+        {/* Category Select */}
         <select
           name="categoryTitle"
           value={form.categoryTitle}
@@ -116,6 +143,24 @@ export default function AddProduct() {
             </option>
           ))}
         </select>
+
+        {/* Subcategory Select */}
+        {subcategories.length > 0 && (
+          <select
+            name="subcategoryTitle"
+            value={form.subcategoryTitle}
+            onChange={handleChange}
+            required
+            className="w-full p-2 border rounded"
+          >
+            <option value="">Select Subcategory</option>
+            {subcategories.map((sub, idx) => (
+              <option key={idx} value={sub}>
+                {sub}
+              </option>
+            ))}
+          </select>
+        )}
 
         <input
           type="number"
