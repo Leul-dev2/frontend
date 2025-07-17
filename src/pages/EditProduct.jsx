@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getProduct, updateProduct } from "../api/productApi";
-import { getCategories } from "../api/categoryApi"; // ✅ import this!
+import { getCategories } from "../api/categoryApi";
 
 export default function EditProduct() {
   const { sku } = useParams();
-  const [form, setForm] = useState(null);
-  const [categories, setCategories] = useState([]); // ✅ store categories
-  const [error, setError] = useState("");
   const navigate = useNavigate();
+
+  const [form, setForm] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [subcategories, setSubcategories] = useState([]);
+  const [error, setError] = useState("");
 
   // ✅ Fetch product + categories
   useEffect(() => {
@@ -18,6 +20,7 @@ export default function EditProduct() {
           getProduct(sku),
           getCategories(),
         ]);
+
         setForm({
           sku: product.sku,
           title: product.title,
@@ -28,23 +31,47 @@ export default function EditProduct() {
           discountPercent: product.discountPercent || "",
           description: product.description || "",
           rating: product.rating || "",
-          categoryTitle: product.category?.title || "", // ✅
+          categoryTitle: product.category?.title || "",
+          subcategoryTitle: product.subcategory?.title || "", // ✅ show subcategory!
         });
+
         setCategories(cats);
       } catch (err) {
-        setError(err.message || "Failed to load product/categories");
+        setError(err.message || "Failed to load data");
       }
     }
     fetchData();
   }, [sku]);
 
+  // ✅ When category changes → update subcategories list
+  useEffect(() => {
+    if (!form?.categoryTitle) {
+      setSubcategories([]);
+      return;
+    }
+
+    const selectedCategory = categories.find(
+      (cat) => cat.title === form.categoryTitle
+    );
+
+    if (selectedCategory && selectedCategory.subCategories) {
+      setSubcategories(selectedCategory.subCategories.map((s) => s.title));
+    } else {
+      setSubcategories([]);
+    }
+  }, [form?.categoryTitle, categories]);
+
   const handleChange = (e) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setForm((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
     try {
       const productData = {
         ...form,
@@ -53,16 +80,18 @@ export default function EditProduct() {
           form.priceAfterDiscount === "" ? undefined : parseFloat(form.priceAfterDiscount),
         discountPercent:
           form.discountPercent === "" ? undefined : parseFloat(form.discountPercent),
-        rating: form.rating === "" ? undefined : parseFloat(form.rating),
+        rating:
+          form.rating === "" ? undefined : parseFloat(form.rating),
       };
+
       await updateProduct(sku, productData);
       navigate("/products");
     } catch (err) {
-      setError(err.message || "Failed to update product");
+      setError(err.message || "Failed to update");
     }
   };
 
-  if (!form) return <div>Loading product data...</div>;
+  if (!form) return <div>Loading...</div>;
 
   return (
     <div className="p-8 max-w-xl mx-auto">
@@ -76,8 +105,9 @@ export default function EditProduct() {
           name="sku"
           value={form.sku}
           disabled
-          className="w-full p-2 border rounded bg-gray-200 cursor-not-allowed"
+          className="w-full p-2 border rounded bg-gray-200"
         />
+
         <input
           type="text"
           name="title"
@@ -87,6 +117,7 @@ export default function EditProduct() {
           required
           className="w-full p-2 border rounded"
         />
+
         <input
           type="text"
           name="brandName"
@@ -96,6 +127,7 @@ export default function EditProduct() {
           required
           className="w-full p-2 border rounded"
         />
+
         <input
           type="text"
           name="image"
@@ -106,7 +138,6 @@ export default function EditProduct() {
           className="w-full p-2 border rounded"
         />
 
-        {/* ✅ Category Select */}
         <select
           name="categoryTitle"
           value={form.categoryTitle}
@@ -122,6 +153,23 @@ export default function EditProduct() {
           ))}
         </select>
 
+        {subcategories.length > 0 && (
+          <select
+            name="subcategoryTitle"
+            value={form.subcategoryTitle}
+            onChange={handleChange}
+            required
+            className="w-full p-2 border rounded"
+          >
+            <option value="">Select Subcategory</option>
+            {subcategories.map((sub, idx) => (
+              <option key={idx} value={sub}>
+                {sub}
+              </option>
+            ))}
+          </select>
+        )}
+
         <input
           type="number"
           name="price"
@@ -130,9 +178,8 @@ export default function EditProduct() {
           onChange={handleChange}
           required
           className="w-full p-2 border rounded"
-          min="0"
-          step="0.01"
         />
+
         <input
           type="number"
           name="priceAfterDiscount"
@@ -140,9 +187,8 @@ export default function EditProduct() {
           value={form.priceAfterDiscount}
           onChange={handleChange}
           className="w-full p-2 border rounded"
-          min="0"
-          step="0.01"
         />
+
         <input
           type="number"
           name="discountPercent"
@@ -150,10 +196,8 @@ export default function EditProduct() {
           value={form.discountPercent}
           onChange={handleChange}
           className="w-full p-2 border rounded"
-          min="0"
-          max="100"
-          step="0.01"
         />
+
         <textarea
           name="description"
           placeholder="Description"
@@ -162,6 +206,7 @@ export default function EditProduct() {
           className="w-full p-2 border rounded"
           rows={3}
         />
+
         <input
           type="number"
           name="rating"
@@ -169,14 +214,11 @@ export default function EditProduct() {
           value={form.rating}
           onChange={handleChange}
           className="w-full p-2 border rounded"
-          min="0"
-          max="5"
-          step="0.1"
         />
 
         <button
           type="submit"
-          className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition"
+          className="bg-blue-600 text-white py-2 px-4 rounded"
         >
           Update Product
         </button>
