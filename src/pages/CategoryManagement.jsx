@@ -15,11 +15,6 @@ export default function CategoryManagement() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const [newCategoryTitle, setNewCategoryTitle] = useState("");
-  const [newSubCategories, setNewSubCategories] = useState("");
-  const [categoryThumbnail, setCategoryThumbnail] = useState(null);
-  const [categoryThumbnailPreview, setCategoryThumbnailPreview] = useState(null);
-
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [newSubCatInputs, setNewSubCatInputs] = useState([
     { title: "", thumbnail: null, preview: null },
@@ -42,61 +37,7 @@ export default function CategoryManagement() {
     }
   };
 
-  // ======= CREATE NEW CATEGORY =======
-  const handleAddCategory = async (e) => {
-    e.preventDefault();
-    if (!newCategoryTitle.trim()) {
-      setError("Category title cannot be empty.");
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-
-    try {
-      let thumbnailUrl = null;
-      if (categoryThumbnail) {
-        thumbnailUrl = await uploadImage(categoryThumbnail);
-      }
-
-      const subCategoriesArray = newSubCategories
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean)
-        .map((title) => ({ title }));
-
-      const createdCategory = await createCategory({
-        title: newCategoryTitle,
-        thumbnail: thumbnailUrl,
-        subCategories: subCategoriesArray,
-      });
-
-      setCategories((prev) => [...prev, createdCategory]);
-      setNewCategoryTitle("");
-      setNewSubCategories("");
-      setCategoryThumbnail(null);
-      setCategoryThumbnailPreview(null);
-      setError("");
-    } catch {
-      setError("Failed to create category.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ======= DELETE CATEGORY =======
-  const handleDeleteCategory = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this category?")) return;
-
-    try {
-      await deleteCategory(id);
-      setCategories((prev) => prev.filter((cat) => cat._id !== id));
-    } catch {
-      setError("Failed to delete category.");
-    }
-  };
-
-  // ======= EDIT CATEGORY TITLE =======
+  // ======= Inline category editing =======
   const handleCategoryTitleChange = (id, newTitle) => {
     setCategories((prev) =>
       prev.map((cat) => (cat._id === id ? { ...cat, title: newTitle } : cat))
@@ -112,7 +53,17 @@ export default function CategoryManagement() {
     }
   };
 
-  // ======= ADD SUBCATEGORY INPUTS =======
+  const handleDeleteCategory = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this category?")) return;
+    try {
+      await deleteCategory(id);
+      setCategories((prev) => prev.filter((cat) => cat._id !== id));
+    } catch {
+      setError("Failed to delete category.");
+    }
+  };
+
+  // ======= Add subcategory input =======
   const handleAddSubInput = () => {
     setNewSubCatInputs((prev) => [...prev, { title: "", thumbnail: null, preview: null }]);
   };
@@ -140,7 +91,7 @@ export default function CategoryManagement() {
     });
   };
 
-  // ======= UPLOAD SUBCATEGORIES =======
+  // ======= Upload subcategories =======
   const handleUploadSubcategories = async () => {
     if (!selectedCategoryId) {
       setError("Select a category first.");
@@ -183,7 +134,7 @@ export default function CategoryManagement() {
     }
   };
 
-  // ======= EDIT SUBCATEGORY TITLE =======
+  // ======= Inline subcategory editing =======
   const handleSubCategoryTitleChange = (catId, subIndex, newTitle) => {
     setCategories((prev) =>
       prev.map((cat) => {
@@ -204,10 +155,8 @@ export default function CategoryManagement() {
     }
   };
 
-  // ======= DELETE SUBCATEGORY =======
   const handleDeleteSubCategory = async (catId, subId) => {
     if (!window.confirm("Delete this subcategory?")) return;
-
     try {
       const updatedCategory = await deleteSubCategory(catId, subId);
       setCategories((prev) =>
@@ -219,62 +168,18 @@ export default function CategoryManagement() {
     }
   };
 
-  // ======= RENDER =======
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">Category Management</h1>
+    <div className="max-w-5xl mx-auto p-6 space-y-10">
+      <h1 className="text-4xl font-bold">Category Management</h1>
 
-      {error && <div className="text-red-600 mb-4">{error}</div>}
+      {error && <div className="text-red-600">{error}</div>}
 
-      {/* New Category Form */}
-      <form onSubmit={handleAddCategory} className="mb-8 space-y-3">
-        <input
-          type="text"
-          placeholder="New Category Title"
-          value={newCategoryTitle}
-          onChange={(e) => setNewCategoryTitle(e.target.value)}
-          className="border p-2 rounded w-full"
-        />
-        <input
-          type="text"
-          placeholder="Subcategories (comma separated, optional)"
-          value={newSubCategories}
-          onChange={(e) => setNewSubCategories(e.target.value)}
-          className="border p-2 rounded w-full"
-        />
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => {
-            setCategoryThumbnail(e.target.files[0]);
-            setCategoryThumbnailPreview(
-              e.target.files[0] ? URL.createObjectURL(e.target.files[0]) : null
-            );
-          }}
-          className="block"
-        />
-        {categoryThumbnailPreview && (
-          <img
-            src={categoryThumbnailPreview}
-            alt="Category Thumbnail Preview"
-            className="w-20 h-20 object-cover rounded"
-          />
-        )}
-        <button
-          type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          disabled={loading}
-        >
-          Add Category
-        </button>
-      </form>
-
-      {/* Add Subcategories to existing category */}
-      <div className="mb-8 border p-4 rounded space-y-4 bg-gray-50">
-        <h2 className="text-xl font-semibold mb-3">Add Subcategories to Existing Category</h2>
+      {/* Add Subcategories */}
+      <div className="p-6 border rounded bg-white shadow space-y-4">
+        <h2 className="text-2xl font-semibold mb-2">Add Subcategories</h2>
 
         <select
-          className="border p-2 rounded w-full mb-3"
+          className="border p-2 rounded w-full"
           value={selectedCategoryId || ""}
           onChange={(e) => setSelectedCategoryId(e.target.value)}
           disabled={loading}
@@ -290,7 +195,7 @@ export default function CategoryManagement() {
         </select>
 
         {newSubCatInputs.map((sub, idx) => (
-          <div key={idx} className="flex gap-3 items-center mb-3">
+          <div key={idx} className="flex gap-4 items-center">
             <input
               type="text"
               placeholder="Subcategory Title"
@@ -316,7 +221,7 @@ export default function CategoryManagement() {
               <button
                 onClick={() => handleRemoveSubInput(idx)}
                 type="button"
-                className="text-red-600 font-bold text-xl"
+                className="text-red-600 text-2xl font-bold"
                 disabled={loading}
               >
                 &times;
@@ -325,40 +230,45 @@ export default function CategoryManagement() {
           </div>
         ))}
 
-        <button
-          type="button"
-          onClick={handleAddSubInput}
-          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-          disabled={loading}
-        >
-          Add Another Subcategory Input
-        </button>
+        <div className="flex flex-wrap gap-4">
+          <button
+            type="button"
+            onClick={handleAddSubInput}
+            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+            disabled={loading}
+          >
+            Add More Inputs
+          </button>
 
-        <button
-          type="button"
-          onClick={handleUploadSubcategories}
-          className="bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-800 mt-4"
-          disabled={loading}
-        >
-          Save Subcategories
-        </button>
+          <button
+            type="button"
+            onClick={handleUploadSubcategories}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            disabled={loading}
+          >
+            Upload Subcategories
+          </button>
+        </div>
       </div>
 
       {/* Categories List */}
-      {loading ? (
-        <p>Loading categories...</p>
-      ) : categories.length === 0 ? (
-        <p>No categories found.</p>
-      ) : (
-        <ul className="space-y-6">
-          {categories.map((cat) => (
-            <li key={cat._id} className="border p-4 rounded bg-white shadow-sm">
+      <div className="space-y-6">
+        {loading ? (
+          <p>Loading...</p>
+        ) : categories.length === 0 ? (
+          <p>No categories yet.</p>
+        ) : (
+          categories.map((cat) => (
+            <div
+              key={cat._id}
+              className="p-4 border rounded bg-white shadow space-y-2"
+            >
               <div className="flex items-center gap-4">
                 {cat.thumbnail && (
                   <img
                     src={cat.thumbnail}
-                    alt="thumbnail"
-                    className="w-12 h-12 object-cover rounded"
+                    alt="thumb"
+                    className="w-12 h-12 rounded object-cover"
                   />
                 )}
                 <EditableText
@@ -377,27 +287,27 @@ export default function CategoryManagement() {
               </div>
 
               {cat.subCategories && cat.subCategories.length > 0 && (
-                <ul className="mt-4 ml-6 list-disc list-inside">
-                  {cat.subCategories.map((subCat, i) => (
-                    <li key={subCat._id || i} className="flex items-center gap-3">
+                <ul className="ml-6 list-disc space-y-2">
+                  {cat.subCategories.map((sub, i) => (
+                    <li key={sub._id} className="flex items-center gap-3">
                       <EditableText
-                        text={subCat.title}
+                        text={sub.title}
                         onChange={(newTitle) =>
                           handleSubCategoryTitleChange(cat._id, i, newTitle)
                         }
                         onSave={(newTitle) =>
-                          saveSubCategoryTitle(cat._id, subCat._id, newTitle)
+                          saveSubCategoryTitle(cat._id, sub._id, newTitle)
                         }
                       />
-                      {subCat.thumbnail && (
+                      {sub.thumbnail && (
                         <img
-                          src={subCat.thumbnail}
-                          alt="thumbnail"
-                          className="w-8 h-8 object-cover rounded"
+                          src={sub.thumbnail}
+                          alt="thumb"
+                          className="w-8 h-8 rounded object-cover"
                         />
                       )}
                       <button
-                        onClick={() => handleDeleteSubCategory(cat._id, subCat._id)}
+                        onClick={() => handleDeleteSubCategory(cat._id, sub._id)}
                         className="text-red-600 hover:underline ml-auto"
                       >
                         Delete
@@ -406,15 +316,15 @@ export default function CategoryManagement() {
                   ))}
                 </ul>
               )}
-            </li>
-          ))}
-        </ul>
-      )}
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }
 
-// Inline editable text component with Save/Cancel
+// ======= EditableText Component =======
 function EditableText({ text, onChange, onSave }) {
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState(text);
@@ -456,7 +366,7 @@ function EditableText({ text, onChange, onSave }) {
   ) : (
     <h3
       onClick={() => setIsEditing(true)}
-      className="text-xl font-semibold cursor-pointer hover:underline"
+      className="text-lg font-semibold cursor-pointer hover:underline"
     >
       {text}
     </h3>
