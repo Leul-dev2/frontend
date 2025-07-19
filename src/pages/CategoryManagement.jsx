@@ -194,19 +194,28 @@ export default function CategoryManagement() {
     }
   };
 
-  const handleDeleteSubCategory = async (catId, subId) => {
-    if (!window.confirm("Delete this subcategory?")) return;
+const handleDeleteSubCategory = async (catId, subId) => {
+  if (!window.confirm("Delete this subcategory?")) return;
 
-    try {
-      const updatedCategory = await deleteSubCategory(catId, subId);
-      setCategories((prev) =>
-        prev.map((cat) => (cat._id === catId ? updatedCategory : cat))
-      );
-      setError("");
-    } catch {
-      setError("Failed to delete subcategory.");
-    }
-  };
+  try {
+    await deleteSubCategory(catId, subId);
+
+    // ✅ Remove subcategory locally!
+    setCategories((prev) =>
+      prev.map((cat) =>
+        cat._id === catId
+          ? {
+              ...cat,
+              subCategories: cat.subCategories.filter((sub) => sub._id !== subId),
+            }
+          : cat
+      )
+    );
+  } catch {
+    setError("Failed to delete subcategory.");
+  }
+};
+
 
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-10">
