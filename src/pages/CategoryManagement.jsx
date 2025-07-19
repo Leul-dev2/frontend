@@ -198,9 +198,9 @@ const handleDeleteSubCategory = async (catId, subId) => {
   if (!window.confirm("Delete this subcategory?")) return;
 
   try {
-    await deleteSubCategory(catId, subId);
+    await deleteSubCategory(catId, subId); // Only triggers backend
 
-    // ✅ Remove subcategory locally!
+    // ✅ Locally update your React state manually!
     setCategories((prev) =>
       prev.map((cat) =>
         cat._id === catId
@@ -211,6 +211,7 @@ const handleDeleteSubCategory = async (catId, subId) => {
           : cat
       )
     );
+    setError("");
   } catch {
     setError("Failed to delete subcategory.");
   }
