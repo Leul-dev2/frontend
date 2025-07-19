@@ -74,7 +74,6 @@ export default function CategoryManagement() {
       setNewSubCategories("");
       setCategoryThumbnail(null);
       setCategoryThumbnailPreview(null);
-      setError("");
     } catch {
       setError("Failed to create category.");
     } finally {
@@ -102,7 +101,6 @@ export default function CategoryManagement() {
   const saveCategoryTitle = async (id, title) => {
     try {
       await updateCategory(id, { title });
-      setError("");
     } catch {
       setError("Failed to update category title.");
     }
@@ -166,7 +164,6 @@ export default function CategoryManagement() {
       );
 
       setNewSubCatInputs([{ title: "", thumbnail: null, preview: null }]);
-      setError("");
     } catch {
       setError("Failed to upload subcategories.");
     } finally {
@@ -188,35 +185,31 @@ export default function CategoryManagement() {
   const saveSubCategoryTitle = async (catId, subId, newTitle) => {
     try {
       await updateSubCategory(catId, subId, { title: newTitle });
-      setError("");
     } catch {
       setError("Failed to update subcategory title.");
     }
   };
 
-const handleDeleteSubCategory = async (catId, subId) => {
-  if (!window.confirm("Delete this subcategory?")) return;
+  const handleDeleteSubCategory = async (catId, subId) => {
+    if (!window.confirm("Delete this subcategory?")) return;
 
-  try {
-    await deleteSubCategory(catId, subId); // Only triggers backend
+    try {
+      await deleteSubCategory(catId, subId);
 
-    // ✅ Locally update your React state manually!
-    setCategories((prev) =>
-      prev.map((cat) =>
-        cat._id === catId
-          ? {
-              ...cat,
-              subCategories: cat.subCategories.filter((sub) => sub._id !== subId),
-            }
-          : cat
-      )
-    );
-    setError("");
-  } catch {
-    setError("Failed to delete subcategory.");
-  }
-};
-
+      // ✅ Safe local removal!
+      setCategories((prev) =>
+        prev.map((cat) => {
+          if (cat._id !== catId) return cat;
+          return {
+            ...cat,
+            subCategories: cat.subCategories.filter((sub) => sub._id !== subId),
+          };
+        })
+      );
+    } catch {
+      setError("Failed to delete subcategory.");
+    }
+  };
 
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-10">
@@ -225,7 +218,10 @@ const handleDeleteSubCategory = async (catId, subId) => {
       {error && <div className="text-red-600 mb-4">{error}</div>}
 
       {/* Create New Category */}
-      <form onSubmit={handleAddCategory} className="space-y-4 border p-6 rounded bg-white shadow">
+      <form
+        onSubmit={handleAddCategory}
+        className="space-y-4 border p-6 rounded bg-white shadow"
+      >
         <h2 className="text-xl font-semibold">Create New Category</h2>
         <input
           type="text"
@@ -330,7 +326,7 @@ const handleDeleteSubCategory = async (catId, subId) => {
             onClick={handleUploadSubcategories}
             disabled={!selectedCategoryId || loading}
             className={`w-full md:w-auto bg-blue-700 text-white px-6 py-3 rounded shadow hover:bg-blue-800 transition ${
-              !selectedCategoryId || loading ? "opacity-1 cursor-not-allowed" : ""
+              !selectedCategoryId || loading ? "opacity-100 cursor-not-allowed" : ""
             }`}
           >
             ✅ Save Subcategories
