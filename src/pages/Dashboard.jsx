@@ -20,6 +20,7 @@ export default function Dashboard() {
   const [customerCount, setCustomerCount] = useState(0);
   const [pendingReviewCount, setPendingReviewCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -31,12 +32,15 @@ export default function Dashboard() {
           getPendingReviews(),
         ]);
 
+        console.log({ products, orders, users, reviews });
+
         setProductCount(products.length);
         setOrderCount(orders.length);
-        setCustomerCount(users.count);
+        setCustomerCount(users.count ?? users.length ?? 0); // supports object or array
         setPendingReviewCount(reviews.length);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
+        setError(error.message || "Failed to load dashboard data.");
       } finally {
         setLoading(false);
       }
@@ -53,6 +57,22 @@ export default function Dashboard() {
   ];
 
   if (loading) return <div className="p-8">Loading dashboard...</div>;
+
+  if (error)
+    return (
+      <div className="p-8 text-red-600">
+        Error loading dashboard: {error}
+      </div>
+    );
+
+  if (
+    productCount === 0 &&
+    orderCount === 0 &&
+    customerCount === 0 &&
+    pendingReviewCount === 0
+  ) {
+    return <div className="p-8">No dashboard data available.</div>;
+  }
 
   return (
     <div className="p-8">
