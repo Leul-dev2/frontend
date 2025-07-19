@@ -1,5 +1,9 @@
-export async function getUsersCount() {
-  const response = await fetch("/api/users/count");
-  if (!response.ok) throw new Error("Failed to fetch users count");
-  return response.json(); // { count: number }
-}
+// src/api/userApi.js
+import axios from "axios";
+
+const API_BASE_URL = process.env.REACT_APP_API_URL;
+
+export const getUsersCount = async () => {
+  const res = await axios.get(`${API_BASE_URL}/users/count`);
+  return res.data; // { count: number }
+};
