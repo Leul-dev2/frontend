@@ -42,6 +42,10 @@ export default function CategoryManagement() {
     }
   };
 
+<<<<<<< HEAD
+=======
+  // === CREATE NEW CATEGORY ===
+>>>>>>> f164a440a27294698b94358d1ef429736887d668
   const handleAddCategory = async (e) => {
     e.preventDefault();
     if (!newCategoryTitle.trim()) {
@@ -82,6 +86,10 @@ export default function CategoryManagement() {
     }
   };
 
+<<<<<<< HEAD
+=======
+  // === DELETE CATEGORY ===
+>>>>>>> f164a440a27294698b94358d1ef429736887d668
   const handleDeleteCategory = async (id) => {
     if (!window.confirm("Are you sure you want to delete this category?")) return;
 
@@ -93,6 +101,10 @@ export default function CategoryManagement() {
     }
   };
 
+<<<<<<< HEAD
+=======
+  // === EDIT CATEGORY TITLE ===
+>>>>>>> f164a440a27294698b94358d1ef429736887d668
   const handleCategoryTitleChange = (id, newTitle) => {
     setCategories((prev) =>
       prev.map((cat) => (cat._id === id ? { ...cat, title: newTitle } : cat))
@@ -108,6 +120,10 @@ export default function CategoryManagement() {
     }
   };
 
+<<<<<<< HEAD
+=======
+  // === ADD SUBCATEGORY INPUTS ===
+>>>>>>> f164a440a27294698b94358d1ef429736887d668
   const handleAddSubInput = () => {
     setNewSubCatInputs((prev) => [...prev, { title: "", thumbnail: null, preview: null }]);
   };
@@ -135,6 +151,10 @@ export default function CategoryManagement() {
     });
   };
 
+<<<<<<< HEAD
+=======
+  // === UPLOAD SUBCATEGORIES ===
+>>>>>>> f164a440a27294698b94358d1ef429736887d668
   const handleUploadSubcategories = async () => {
     if (!selectedCategoryId) {
       setError("Select a category first.");
@@ -174,6 +194,10 @@ export default function CategoryManagement() {
     }
   };
 
+<<<<<<< HEAD
+=======
+  // === EDIT SUBCATEGORY ===
+>>>>>>> f164a440a27294698b94358d1ef429736887d668
   const handleSubCategoryTitleChange = (catId, subIndex, newTitle) => {
     setCategories((prev) =>
       prev.map((cat) => {
@@ -208,6 +232,10 @@ export default function CategoryManagement() {
     }
   };
 
+<<<<<<< HEAD
+=======
+  // === RENDER ===
+>>>>>>> f164a440a27294698b94358d1ef429736887d668
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-10">
       <h1 className="text-3xl font-bold mb-6">Category Management</h1>
@@ -278,7 +306,11 @@ export default function CategoryManagement() {
         </select>
 
         {newSubCatInputs.map((sub, idx) => (
+<<<<<<< HEAD
           <div key={idx} className="flex flex-col md:flex-row md:items-center gap-4">
+=======
+          <div key={idx} className="flex gap-3 items-center">
+>>>>>>> f164a440a27294698b94358d1ef429736887d668
             <input
               type="text"
               placeholder="Subcategory Title"
@@ -306,6 +338,7 @@ export default function CategoryManagement() {
           </div>
         ))}
 
+<<<<<<< HEAD
         <button
           type="button"
           onClick={handleAddSubInput}
@@ -324,6 +357,22 @@ export default function CategoryManagement() {
             }`}
           >
             ✅ Save Subcategories
+=======
+        <div className="flex flex-wrap gap-4">
+          <button
+            type="button"
+            onClick={handleAddSubInput}
+            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+          >
+            Add Another Input
+          </button>
+          <button
+            type="button"
+            onClick={handleUploadSubcategories}
+            className="bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-800"
+          >
+            Save Subcategories
+>>>>>>> f164a440a27294698b94358d1ef429736887d668
           </button>
         </div>
       </div>
