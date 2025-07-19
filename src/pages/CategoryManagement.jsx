@@ -4,10 +4,10 @@ import {
   createCategory,
   deleteCategory,
   addSubCategories,
-  updateCategory,      // new API call for updating category
-  deleteSubCategory,   // new API call for deleting subcategory
-  updateSubCategory,   // new API call for updating subcategory
-  uploadImage,         // new API call for uploading images
+  updateCategory,
+  deleteSubCategory,
+  updateSubCategory,
+  uploadImage,
 } from "../api/categoryApi";
 
 export default function CategoryManagement() {
@@ -15,17 +15,16 @@ export default function CategoryManagement() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // For new category form
   const [newCategoryTitle, setNewCategoryTitle] = useState("");
-  const [newSubCategories, setNewSubCategories] = useState(""); // CSV input
+  const [newSubCategories, setNewSubCategories] = useState("");
+  const [categoryThumbnail, setCategoryThumbnail] = useState(null);
+  const [categoryThumbnailPreview, setCategoryThumbnailPreview] = useState(null);
 
-  // For adding subcategories dynamically
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [newSubCatInputs, setNewSubCatInputs] = useState([
     { title: "", thumbnail: null, preview: null },
   ]);
 
-  // Load categories on mount
   useEffect(() => {
     fetchCategories();
   }, []);
@@ -43,7 +42,7 @@ export default function CategoryManagement() {
     }
   };
 
-  // ======= CREATE NEW CATEGORY WITH CSV SUBCATEGORIES =======
+  // ======= CREATE NEW CATEGORY =======
   const handleAddCategory = async (e) => {
     e.preventDefault();
     if (!newCategoryTitle.trim()) {
@@ -51,23 +50,37 @@ export default function CategoryManagement() {
       return;
     }
 
-    const subCategoriesArray = newSubCategories
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .map((title) => ({ title }));
+    setLoading(true);
+    setError("");
 
     try {
+      let thumbnailUrl = null;
+      if (categoryThumbnail) {
+        thumbnailUrl = await uploadImage(categoryThumbnail);
+      }
+
+      const subCategoriesArray = newSubCategories
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .map((title) => ({ title }));
+
       const createdCategory = await createCategory({
         title: newCategoryTitle,
+        thumbnail: thumbnailUrl,
         subCategories: subCategoriesArray,
       });
+
       setCategories((prev) => [...prev, createdCategory]);
       setNewCategoryTitle("");
       setNewSubCategories("");
+      setCategoryThumbnail(null);
+      setCategoryThumbnailPreview(null);
       setError("");
     } catch {
       setError("Failed to create category.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -83,7 +96,7 @@ export default function CategoryManagement() {
     }
   };
 
-  // ======= INLINE EDIT CATEGORY TITLE =======
+  // ======= EDIT CATEGORY TITLE =======
   const handleCategoryTitleChange = (id, newTitle) => {
     setCategories((prev) =>
       prev.map((cat) => (cat._id === id ? { ...cat, title: newTitle } : cat))
@@ -99,17 +112,15 @@ export default function CategoryManagement() {
     }
   };
 
-  // ======= ADD SUBCATEGORY INPUTS DYNAMICALLY =======
+  // ======= ADD SUBCATEGORY INPUTS =======
   const handleAddSubInput = () => {
     setNewSubCatInputs((prev) => [...prev, { title: "", thumbnail: null, preview: null }]);
   };
 
-  // Remove one subcategory input row
   const handleRemoveSubInput = (index) => {
     setNewSubCatInputs((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Handle subcategory input change (title)
   const handleSubInputChange = (index, value) => {
     setNewSubCatInputs((prev) => {
       const copy = [...prev];
@@ -118,12 +129,9 @@ export default function CategoryManagement() {
     });
   };
 
-  // Handle thumbnail file selection
-  const handleSubThumbnailChange = async (index, file) => {
+  const handleSubThumbnailChange = (index, file) => {
     if (!file) return;
-    // Create preview URL for UI
     const preview = URL.createObjectURL(file);
-
     setNewSubCatInputs((prev) => {
       const copy = [...prev];
       copy[index].thumbnail = file;
@@ -132,14 +140,13 @@ export default function CategoryManagement() {
     });
   };
 
-  // ======= UPLOAD SUBCATEGORIES TO SELECTED CATEGORY =======
+  // ======= UPLOAD SUBCATEGORIES =======
   const handleUploadSubcategories = async () => {
     if (!selectedCategoryId) {
       setError("Select a category first.");
       return;
     }
 
-    // Filter out empty titles
     const validSubs = newSubCatInputs.filter((sub) => sub.title.trim() !== "");
 
     if (validSubs.length === 0) {
@@ -151,27 +158,22 @@ export default function CategoryManagement() {
     setError("");
 
     try {
-      // Upload thumbnails one by one (if any)
       const uploadedSubs = await Promise.all(
         validSubs.map(async (sub) => {
           let thumbnailUrl = null;
           if (sub.thumbnail) {
-            // uploadImage should return URL string
             thumbnailUrl = await uploadImage(sub.thumbnail);
           }
           return { title: sub.title.trim(), thumbnail: thumbnailUrl };
         })
       );
 
-      // Add subcategories to backend
       const updatedCategory = await addSubCategories(selectedCategoryId, uploadedSubs);
 
-      // Update local state with updated category
       setCategories((prev) =>
         prev.map((cat) => (cat._id === selectedCategoryId ? updatedCategory : cat))
       );
 
-      // Reset input
       setNewSubCatInputs([{ title: "", thumbnail: null, preview: null }]);
       setError("");
     } catch {
@@ -181,7 +183,7 @@ export default function CategoryManagement() {
     }
   };
 
-  // ======= INLINE EDIT SUBCATEGORY =======
+  // ======= EDIT SUBCATEGORY TITLE =======
   const handleSubCategoryTitleChange = (catId, subIndex, newTitle) => {
     setCategories((prev) =>
       prev.map((cat) => {
@@ -240,6 +242,24 @@ export default function CategoryManagement() {
           onChange={(e) => setNewSubCategories(e.target.value)}
           className="border p-2 rounded w-full"
         />
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => {
+            setCategoryThumbnail(e.target.files[0]);
+            setCategoryThumbnailPreview(
+              e.target.files[0] ? URL.createObjectURL(e.target.files[0]) : null
+            );
+          }}
+          className="block"
+        />
+        {categoryThumbnailPreview && (
+          <img
+            src={categoryThumbnailPreview}
+            alt="Category Thumbnail Preview"
+            className="w-20 h-20 object-cover rounded"
+          />
+        )}
         <button
           type="submit"
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
@@ -298,7 +318,6 @@ export default function CategoryManagement() {
                 type="button"
                 className="text-red-600 font-bold text-xl"
                 disabled={loading}
-                title="Remove"
               >
                 &times;
               </button>
@@ -325,7 +344,7 @@ export default function CategoryManagement() {
         </button>
       </div>
 
-      {/* Categories List with Inline Editing */}
+      {/* Categories List */}
       {loading ? (
         <p>Loading categories...</p>
       ) : categories.length === 0 ? (
@@ -333,25 +352,30 @@ export default function CategoryManagement() {
       ) : (
         <ul className="space-y-6">
           {categories.map((cat) => (
-            <li
-              key={cat._id}
-              className="border p-4 rounded bg-white shadow-sm"
-            >
-              {/* Editable Category Title */}
-              <EditableText
-                text={cat.title}
-                onChange={(newTitle) => handleCategoryTitleChange(cat._id, newTitle)}
-                onSave={(newTitle) => saveCategoryTitle(cat._id, newTitle)}
-              />
+            <li key={cat._id} className="border p-4 rounded bg-white shadow-sm">
+              <div className="flex items-center gap-4">
+                {cat.thumbnail && (
+                  <img
+                    src={cat.thumbnail}
+                    alt="thumbnail"
+                    className="w-12 h-12 object-cover rounded"
+                  />
+                )}
+                <EditableText
+                  text={cat.title}
+                  onChange={(newTitle) =>
+                    handleCategoryTitleChange(cat._id, newTitle)
+                  }
+                  onSave={(newTitle) => saveCategoryTitle(cat._id, newTitle)}
+                />
+                <button
+                  onClick={() => handleDeleteCategory(cat._id)}
+                  className="text-red-600 hover:underline ml-auto"
+                >
+                  Delete
+                </button>
+              </div>
 
-              <button
-                onClick={() => handleDeleteCategory(cat._id)}
-                className="text-red-600 hover:underline mt-2"
-              >
-                Delete Category
-              </button>
-
-              {/* Subcategories List */}
               {cat.subCategories && cat.subCategories.length > 0 && (
                 <ul className="mt-4 ml-6 list-disc list-inside">
                   {cat.subCategories.map((subCat, i) => (
@@ -390,7 +414,7 @@ export default function CategoryManagement() {
   );
 }
 
-// ======= Inline Editable Text Component =======
+// Inline editable text component with Save/Cancel
 function EditableText({ text, onChange, onSave }) {
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState(text);
@@ -406,30 +430,33 @@ function EditableText({ text, onChange, onSave }) {
     setIsEditing(false);
   };
 
+  const cancel = () => {
+    setValue(text);
+    setIsEditing(false);
+  };
+
   return isEditing ? (
-    <input
-      autoFocus
-      value={value}
-      onChange={(e) => {
-        setValue(e.target.value);
-        onChange(e.target.value);
-      }}
-      onBlur={save}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") {
-          save();
-        } else if (e.key === "Escape") {
-          setValue(text);
-          setIsEditing(false);
-        }
-      }}
-      className="border p-1 rounded w-full"
-    />
+    <div className="flex gap-2">
+      <input
+        autoFocus
+        value={value}
+        onChange={(e) => {
+          setValue(e.target.value);
+          onChange(e.target.value);
+        }}
+        className="border p-1 rounded"
+      />
+      <button onClick={save} className="bg-blue-600 text-white px-2 rounded">
+        Save
+      </button>
+      <button onClick={cancel} className="bg-gray-400 text-white px-2 rounded">
+        Cancel
+      </button>
+    </div>
   ) : (
     <h3
       onClick={() => setIsEditing(true)}
       className="text-xl font-semibold cursor-pointer hover:underline"
-      title="Click to edit"
     >
       {text}
     </h3>
