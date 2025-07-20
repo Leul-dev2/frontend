@@ -12,7 +12,7 @@ export default function AdminChats() {
 
   const messagesEndRef = useRef(null);
 
-  // Scroll messages to bottom when messages change
+  // Scroll to bottom when messages update
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
@@ -26,21 +26,20 @@ export default function AdminChats() {
       setError(null);
       try {
         const data = await fetchAllChats();
-        console.log("Chats data from API:", data); // Debug log to check shape
 
-        // If API returns object with chats array inside, adjust here:
-        // Example: if (data.chats) setChats(data.chats);
+        // Defensive: ensure data is array
         if (Array.isArray(data)) {
           setChats(data);
         } else if (Array.isArray(data.chats)) {
           setChats(data.chats);
         } else {
-          setChats([]); // fallback empty
-          setError("Chats data is invalid");
+          setChats([]);
+          setError("Invalid data format received for chats");
         }
       } catch (e) {
         setError("Failed to load chats");
         console.error(e);
+        setChats([]);
       } finally {
         setLoadingChats(false);
       }
@@ -48,7 +47,7 @@ export default function AdminChats() {
     loadChats();
   }, []);
 
-  // Load messages for selected chat
+  // Load messages for a chat
   const loadMessages = async (chatId) => {
     setSelectedChat(chatId);
     setLoadingMessages(true);
@@ -72,7 +71,7 @@ export default function AdminChats() {
     try {
       await sendAdminReply(selectedChat, reply.trim());
       setReply("");
-      await loadMessages(selectedChat); // Refresh messages after sending reply
+      await loadMessages(selectedChat);
     } catch (e) {
       setError("Failed to send reply");
       console.error(e);
@@ -86,30 +85,23 @@ export default function AdminChats() {
         <h2>Chats</h2>
         {loadingChats && <p>Loading chats...</p>}
         {error && <p style={{ color: "red" }}>{error}</p>}
-        {!loadingChats && !error && (
-          <>
-            {Array.isArray(chats) && chats.length > 0 ? (
-              chats.map((chat) => (
-                <div
-                  key={chat.id}
-                  style={{
-                    padding: "10px",
-                    border: selectedChat === chat.id ? "2px solid #007bff" : "1px solid #ddd",
-                    marginBottom: "5px",
-                    cursor: "pointer",
-                    borderRadius: "5px",
-                    backgroundColor: selectedChat === chat.id ? "#e9f0ff" : "white",
-                  }}
-                  onClick={() => loadMessages(chat.id)}
-                >
-                  Chat ID: {chat.id}
-                </div>
-              ))
-            ) : (
-              <p>No chats available</p>
-            )}
-          </>
-        )}
+        {!loadingChats && !error && (chats || []).length === 0 && <p>No chats available</p>}
+        {!loadingChats && (chats || []).map((chat) => (
+          <div
+            key={chat.id}
+            style={{
+              padding: "10px",
+              border: selectedChat === chat.id ? "2px solid #007bff" : "1px solid #ddd",
+              marginBottom: "5px",
+              cursor: "pointer",
+              borderRadius: "5px",
+              backgroundColor: selectedChat === chat.id ? "#e9f0ff" : "white",
+            }}
+            onClick={() => loadMessages(chat.id)}
+          >
+            Chat ID: {chat.id}
+          </div>
+        ))}
       </div>
 
       {/* Messages & Reply */}
@@ -131,23 +123,22 @@ export default function AdminChats() {
               {loadingMessages && <p>Loading messages...</p>}
               {error && <p style={{ color: "red" }}>{error}</p>}
               {!loadingMessages && messages.length === 0 && <p>No messages yet</p>}
-              {!loadingMessages &&
-                messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    style={{
-                      marginBottom: "0.5rem",
-                      padding: "8px",
-                      borderRadius: "8px",
-                      backgroundColor: msg.senderId === "admin" ? "#d0f0c0" : "#f0f0f0",
-                      alignSelf: msg.senderId === "admin" ? "flex-end" : "flex-start",
-                      maxWidth: "70%",
-                      wordBreak: "break-word",
-                    }}
-                  >
-                    <strong>{msg.senderId === "admin" ? "Admin" : "User"}:</strong> {msg.message}
-                  </div>
-                ))}
+              {!loadingMessages && messages.map((msg) => (
+                <div
+                  key={msg.id}
+                  style={{
+                    marginBottom: "0.5rem",
+                    padding: "8px",
+                    borderRadius: "8px",
+                    backgroundColor: msg.senderId === "admin" ? "#d0f0c0" : "#f0f0f0",
+                    alignSelf: msg.senderId === "admin" ? "flex-end" : "flex-start",
+                    maxWidth: "70%",
+                    wordBreak: "break-word",
+                  }}
+                >
+                  <strong>{msg.senderId === "admin" ? "Admin" : "User"}:</strong> {msg.message}
+                </div>
+              ))}
               <div ref={messagesEndRef} />
             </div>
 
