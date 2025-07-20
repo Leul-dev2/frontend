@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { fetchAllChats, fetchMessages, sendAdminReply } from "./adminChatApi";
+import { fetchAllChats, fetchMessages, sendAdminReply } from "../api/adminChatApi";
 
 export default function AdminChats() {
   const [chats, setChats] = useState([]);
