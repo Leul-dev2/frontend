@@ -1,7 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import axios from "axios";
-
-const BASE_URL = "https://backend-ecomm-jol4.onrender.com/api";
+import { fetchAllChats, fetchMessages, sendAdminReply } from "./adminChatApi";
 
 export default function AdminChats() {
   const [chats, setChats] = useState([]);
@@ -21,61 +19,58 @@ export default function AdminChats() {
     }
   }, [messages]);
 
-  // Load all chats on component mount
+  // Load all chats on mount
   useEffect(() => {
-    setLoadingChats(true);
-    setError(null);
-
-    axios
-      .get(`${BASE_URL}/chats/all`)
-      .then((res) => {
-        // Adjust this if your backend response shape is different
-        setChats(res.data);
-        setLoadingChats(false);
-      })
-      .catch((err) => {
+    async function loadChats() {
+      setLoadingChats(true);
+      setError(null);
+      try {
+        const data = await fetchAllChats();
+        setChats(data);
+      } catch (e) {
         setError("Failed to load chats");
+        console.error(e);
+      } finally {
         setLoadingChats(false);
-        console.error(err);
-      });
+      }
+    }
+    loadChats();
   }, []);
 
-  // Load messages for selected chat
+  // Load messages for a chat
   const loadMessages = async (chatId) => {
     setSelectedChat(chatId);
     setLoadingMessages(true);
     setError(null);
     try {
-      const res = await axios.get(`${BASE_URL}/chats/${chatId}/messages`);
-      setMessages(res.data);
-      setLoadingMessages(false);
-    } catch (err) {
+      const data = await fetchMessages(chatId);
+      setMessages(data);
+    } catch (e) {
       setError("Failed to load messages");
       setMessages([]);
+      console.error(e);
+    } finally {
       setLoadingMessages(false);
-      console.error(err);
     }
   };
 
   // Send admin reply
-  const sendReply = async () => {
+  const handleSendReply = async () => {
     if (!reply.trim()) return;
 
     try {
-      await axios.post(`${BASE_URL}/chats/${selectedChat}/messages`, {
-        message: reply.trim(),
-      });
+      await sendAdminReply(selectedChat, reply.trim());
       setReply("");
-      await loadMessages(selectedChat); // Refresh messages
-    } catch (err) {
+      await loadMessages(selectedChat);
+    } catch (e) {
       setError("Failed to send reply");
-      console.error(err);
+      console.error(e);
     }
   };
 
   return (
     <div style={{ display: "flex", gap: "2rem", padding: "1rem" }}>
-      {/* Left panel: list of chats */}
+      {/* Chat List */}
       <div style={{ width: "30%", borderRight: "1px solid #ccc", paddingRight: "1rem" }}>
         <h2>Chats</h2>
         {loadingChats && <p>Loading chats...</p>}
@@ -99,12 +94,11 @@ export default function AdminChats() {
         ))}
       </div>
 
-      {/* Right panel: messages + reply */}
+      {/* Messages & Reply */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
         {selectedChat ? (
           <>
             <h2>Messages for Chat: {selectedChat}</h2>
-
             <div
               style={{
                 border: "1px solid #ccc",
@@ -147,7 +141,7 @@ export default function AdminChats() {
             />
 
             <button
-              onClick={sendReply}
+              onClick={handleSendReply}
               disabled={!reply.trim()}
               style={{
                 padding: "10px 15px",
