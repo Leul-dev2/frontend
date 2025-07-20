@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { fetchAllChats, fetchMessages, sendAdminReply } from "../api/adminChatApi";
+import adminChatApi from "../api/adminChatApi";
 
 export default function AdminChats() {
   const [chats, setChats] = useState([]);
@@ -25,7 +25,7 @@ export default function AdminChats() {
       setLoadingChats(true);
       setError(null);
       try {
-        const data = await fetchAllChats();
+        const data = await adminChatApi.fetchAllChats();
         setChats(data);
       } catch (e) {
         setError("Failed to load chats");
@@ -43,7 +43,7 @@ export default function AdminChats() {
     setLoadingMessages(true);
     setError(null);
     try {
-      const data = await fetchMessages(chatId);
+      const data = await adminChatApi.fetchMessages(chatId);
       setMessages(data);
     } catch (e) {
       setError("Failed to load messages");
@@ -59,9 +59,9 @@ export default function AdminChats() {
     if (!reply.trim()) return;
 
     try {
-      await sendAdminReply(selectedChat, reply.trim());
+      await adminChatApi.sendAdminReply(selectedChat, reply.trim());
       setReply("");
-      await loadMessages(selectedChat);
+      await loadMessages(selectedChat); // Refresh messages
     } catch (e) {
       setError("Failed to send reply");
       console.error(e);
