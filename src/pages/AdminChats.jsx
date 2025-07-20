@@ -16,12 +16,14 @@ export default function AdminChats() {
 
   const messagesEndRef = useRef(null);
 
+  // Auto scroll messages view on update
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
 
+  // Load all chats
   useEffect(() => {
     const loadChats = async () => {
       setLoadingChats(true);
@@ -48,6 +50,7 @@ export default function AdminChats() {
     loadChats();
   }, []);
 
+  // Load messages of selected chat
   const loadMessages = async (chatId) => {
     setSelectedChat(chatId);
     setLoadingMessages(true);
@@ -71,6 +74,7 @@ export default function AdminChats() {
     }
   };
 
+  // Send reply message
   const handleSendReply = async () => {
     if (!reply.trim()) return;
     try {
@@ -83,86 +87,186 @@ export default function AdminChats() {
     }
   };
 
+  // Helper to format timestamps
+  const formatTimestamp = (ts) => {
+    if (!ts) return "";
+    const date = new Date(ts);
+    return date.toLocaleString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      day: "numeric",
+      month: "short",
+    });
+  };
+
+  // Chat item display: ID + name fallback
+  const renderChatItem = (chat) => {
+    const chatId = chat.id || chat._id;
+    const chatName = chat.name || chat.userName || "Unknown User";
+    const isSelected = selectedChat === chatId;
+
+    return (
+      <div
+        key={chatId}
+        onClick={() => loadMessages(chatId)}
+        style={{
+          padding: "12px 15px",
+          marginBottom: 8,
+          borderRadius: 8,
+          cursor: "pointer",
+          backgroundColor: isSelected ? "#007bff" : "#f9f9f9",
+          color: isSelected ? "white" : "#333",
+          boxShadow: isSelected
+            ? "0 4px 8px rgba(0,123,255,0.3)"
+            : "0 1px 3px rgba(0,0,0,0.1)",
+          transition: "background-color 0.2s ease, box-shadow 0.2s ease",
+          fontWeight: isSelected ? "600" : "500",
+          userSelect: "none",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <div style={{ fontSize: 16 }}>{chatName}</div>
+        <div style={{ fontSize: 12, opacity: 0.7 }}>Chat ID: {chatId}</div>
+      </div>
+    );
+  };
+
+  // Message bubble component
+  const renderMessage = (msg) => {
+    const msgId = msg.id || msg._id;
+    const isAdmin = msg.senderId === "admin";
+    const senderName = isAdmin ? "Admin" : msg.senderName || "User";
+    const timestamp = msg.createdAt
+      ? formatTimestamp(new Date(msg.createdAt))
+      : "";
+
+    return (
+      <div
+        key={msgId}
+        style={{
+          maxWidth: "70%",
+          marginBottom: 10,
+          alignSelf: isAdmin ? "flex-end" : "flex-start",
+          backgroundColor: isAdmin ? "#d0f0c0" : "#f0f0f0",
+          color: "#222",
+          padding: "12px 16px",
+          borderRadius: 20,
+          boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
+          wordBreak: "break-word",
+          position: "relative",
+          fontSize: 15,
+          lineHeight: 1.3,
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <strong style={{ marginBottom: 6 }}>{senderName}</strong>
+        <span>{msg.message}</span>
+        {timestamp && (
+          <small
+            style={{
+              fontSize: 11,
+              opacity: 0.6,
+              marginTop: 8,
+              alignSelf: "flex-end",
+            }}
+          >
+            {timestamp}
+          </small>
+        )}
+      </div>
+    );
+  };
+
   return (
-    <div style={{ display: "flex", gap: "2rem", padding: "1rem" }}>
+    <div
+      style={{
+        display: "flex",
+        gap: 20,
+        padding: 20,
+        height: "calc(100vh - 40px)",
+        boxSizing: "border-box",
+        backgroundColor: "#f5f7fa",
+        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+      }}
+    >
+      {/* Chats List */}
       <div
         style={{
           width: "30%",
-          borderRight: "1px solid #ccc",
-          paddingRight: "1rem",
+          backgroundColor: "white",
+          borderRadius: 12,
+          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+          padding: 16,
+          display: "flex",
+          flexDirection: "column",
         }}
       >
-        <h2>Chats</h2>
+        <h2 style={{ marginBottom: 20, color: "#333" }}>Chats</h2>
         {loadingChats && <p>Loading chats...</p>}
-        {error && <p style={{ color: "red" }}>{error}</p>}
-        {!loadingChats && !error && chats.length === 0 && <p>No chats found</p>}
-        {!loadingChats &&
-          chats.map((chat) => (
-            <div
-              key={chat.id || chat._id}
-              onClick={() => loadMessages(chat.id || chat._id)}
-              style={{
-                padding: "10px",
-                border:
-                  selectedChat === (chat.id || chat._id)
-                    ? "2px solid #007bff"
-                    : "1px solid #ddd",
-                marginBottom: "5px",
-                cursor: "pointer",
-                borderRadius: "5px",
-                backgroundColor:
-                  selectedChat === (chat.id || chat._id)
-                    ? "#e9f0ff"
-                    : "white",
-              }}
-            >
-              Chat ID: {chat.id || chat._id}
-            </div>
-          ))}
+        {error && !loadingChats && (
+          <p style={{ color: "red", fontWeight: "600" }}>{error}</p>
+        )}
+        {!loadingChats && !error && chats.length === 0 && (
+          <p style={{ color: "#777" }}>No chats found.</p>
+        )}
+        <div
+          style={{
+            overflowY: "auto",
+            flexGrow: 1,
+            paddingRight: 4,
+          }}
+        >
+          {chats.map(renderChatItem)}
+        </div>
       </div>
 
-      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+      {/* Messages and Reply */}
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          backgroundColor: "white",
+          borderRadius: 12,
+          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+          padding: 16,
+        }}
+      >
         {selectedChat ? (
           <>
-            <h2>Messages for Chat: {selectedChat}</h2>
+            <h2 style={{ marginBottom: 16, color: "#333" }}>
+              Messages for Chat:{" "}
+              <span
+                style={{ color: "#007bff", fontWeight: "700" }}
+                title={selectedChat}
+              >
+                {selectedChat}
+              </span>
+            </h2>
             <div
               style={{
-                border: "1px solid #ccc",
                 flexGrow: 1,
                 overflowY: "auto",
-                marginBottom: "1rem",
-                padding: "1rem",
-                borderRadius: "5px",
+                padding: 10,
+                display: "flex",
+                flexDirection: "column",
+                scrollBehavior: "smooth",
                 backgroundColor: "#fafafa",
+                borderRadius: 8,
+                border: "1px solid #ddd",
               }}
             >
               {loadingMessages && <p>Loading messages...</p>}
-              {error && <p style={{ color: "red" }}>{error}</p>}
+              {error && !loadingMessages && (
+                <p style={{ color: "red", fontWeight: "600" }}>{error}</p>
+              )}
               {!loadingMessages && messages.length === 0 && (
-                <p>No messages yet</p>
+                <p style={{ color: "#777" }}>No messages yet.</p>
               )}
               {!loadingMessages &&
-                messages.map((msg) => (
-                  <div
-                    key={msg.id || msg._id}
-                    style={{
-                      marginBottom: "0.5rem",
-                      padding: "8px",
-                      borderRadius: "8px",
-                      backgroundColor:
-                        msg.senderId === "admin" ? "#d0f0c0" : "#f0f0f0",
-                      alignSelf:
-                        msg.senderId === "admin" ? "flex-end" : "flex-start",
-                      maxWidth: "70%",
-                      wordBreak: "break-word",
-                    }}
-                  >
-                    <strong>
-                      {msg.senderId === "admin" ? "Admin" : "User"}:
-                    </strong>{" "}
-                    {msg.message}
-                  </div>
-                ))}
+                messages.map((msg) => renderMessage(msg))}
               <div ref={messagesEndRef} />
             </div>
 
@@ -172,10 +276,16 @@ export default function AdminChats() {
               onChange={(e) => setReply(e.target.value)}
               placeholder="Type your reply here..."
               style={{
-                width: "100%",
-                marginBottom: "1rem",
+                marginTop: 12,
+                padding: 12,
                 resize: "vertical",
-                padding: "8px",
+                borderRadius: 12,
+                border: "1px solid #ccc",
+                fontSize: 16,
+                fontFamily: "inherit",
+                boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
+                outline: "none",
+                width: "100%",
               }}
             />
 
@@ -183,21 +293,28 @@ export default function AdminChats() {
               onClick={handleSendReply}
               disabled={!reply.trim()}
               style={{
-                padding: "10px 15px",
+                marginTop: 12,
+                padding: "12px 20px",
+                borderRadius: 12,
+                border: "none",
                 backgroundColor: reply.trim() ? "#007bff" : "#999",
                 color: "white",
-                border: "none",
-                borderRadius: "5px",
+                fontWeight: "600",
                 cursor: reply.trim() ? "pointer" : "not-allowed",
                 alignSelf: "flex-end",
-                minWidth: "100px",
+                minWidth: 120,
+                boxShadow: reply.trim()
+                  ? "0 4px 8px rgba(0,123,255,0.4)"
+                  : "none",
+                transition: "background-color 0.2s ease",
+                userSelect: "none",
               }}
             >
               Send Reply
             </button>
           </>
         ) : (
-          <p>Select a chat to view messages and reply.</p>
+          <p style={{ color: "#777" }}>Select a chat to view messages and reply.</p>
         )}
       </div>
     </div>
