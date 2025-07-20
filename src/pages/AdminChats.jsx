@@ -16,14 +16,12 @@ export default function AdminChats() {
 
   const messagesEndRef = useRef(null);
 
-  // Auto scroll messages view on update
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
 
-  // Load all chats
   useEffect(() => {
     const loadChats = async () => {
       setLoadingChats(true);
@@ -35,13 +33,13 @@ export default function AdminChats() {
         } else if (data && Array.isArray(data.chats)) {
           setChats(data.chats);
         } else {
+          console.warn("Unexpected chats data format:", data);
           setChats([]);
-          setError("Invalid data format for chats");
-          console.error("⚠️ Unexpected data:", data);
+          setError("Could not load chats: invalid format.");
         }
       } catch (err) {
-        console.error(err);
-        setError("Failed to load chats");
+        console.error("Error fetching chats:", err);
+        setError("Failed to load chats.");
         setChats([]);
       } finally {
         setLoadingChats(false);
@@ -50,7 +48,6 @@ export default function AdminChats() {
     loadChats();
   }, []);
 
-  // Load messages of selected chat
   const loadMessages = async (chatId) => {
     setSelectedChat(chatId);
     setLoadingMessages(true);
@@ -62,19 +59,19 @@ export default function AdminChats() {
       } else if (data && Array.isArray(data.messages)) {
         setMessages(data.messages);
       } else {
+        console.warn("Unexpected messages format:", data);
         setMessages([]);
-        console.error("⚠️ Unexpected messages format:", data);
+        setError("Could not load messages: invalid format.");
       }
     } catch (err) {
-      console.error(err);
-      setError("Failed to load messages");
+      console.error("Error fetching messages:", err);
+      setError("Failed to load messages.");
       setMessages([]);
     } finally {
       setLoadingMessages(false);
     }
   };
 
-  // Send reply message
   const handleSendReply = async () => {
     if (!reply.trim()) return;
     try {
@@ -82,12 +79,11 @@ export default function AdminChats() {
       setReply("");
       await loadMessages(selectedChat);
     } catch (err) {
-      console.error(err);
-      setError("Failed to send reply");
+      console.error("Error sending reply:", err);
+      setError("Failed to send reply.");
     }
   };
 
-  // Helper to format timestamps
   const formatTimestamp = (ts) => {
     if (!ts) return "";
     const date = new Date(ts);
@@ -99,10 +95,10 @@ export default function AdminChats() {
     });
   };
 
-  // Chat item display: ID + name fallback
   const renderChatItem = (chat) => {
-    const chatId = chat.id || chat._id;
-    const chatName = chat.name || chat.userName || "Unknown User";
+    const chatId = chat.id || chat._id || "unknown_id";
+    const chatName =
+      chat.name || chat.userName || chat.user?.name || `Chat ${chatId}`;
     const isSelected = selectedChat === chatId;
 
     return (
@@ -115,61 +111,51 @@ export default function AdminChats() {
           borderRadius: 8,
           cursor: "pointer",
           backgroundColor: isSelected ? "#007bff" : "#f9f9f9",
-          color: isSelected ? "white" : "#333",
+          color: isSelected ? "#fff" : "#333",
+          fontWeight: isSelected ? 600 : 500,
           boxShadow: isSelected
             ? "0 4px 8px rgba(0,123,255,0.3)"
-            : "0 1px 3px rgba(0,0,0,0.1)",
-          transition: "background-color 0.2s ease, box-shadow 0.2s ease",
-          fontWeight: isSelected ? "600" : "500",
-          userSelect: "none",
-          display: "flex",
-          flexDirection: "column",
+            : "0 1px 3px rgba(0,0,0,0.05)",
+          transition: "all 0.2s ease",
         }}
       >
         <div style={{ fontSize: 16 }}>{chatName}</div>
-        <div style={{ fontSize: 12, opacity: 0.7 }}>Chat ID: {chatId}</div>
+        <div style={{ fontSize: 12, opacity: 0.6 }}>ID: {chatId}</div>
       </div>
     );
   };
 
-  // Message bubble component
   const renderMessage = (msg) => {
-    const msgId = msg.id || msg._id;
+    const msgId = msg.id || msg._id || "unknown_msg_id";
     const isAdmin = msg.senderId === "admin";
     const senderName = isAdmin ? "Admin" : msg.senderName || "User";
-    const timestamp = msg.createdAt
-      ? formatTimestamp(new Date(msg.createdAt))
-      : "";
+    const timestamp = msg.createdAt ? formatTimestamp(msg.createdAt) : "";
 
     return (
       <div
         key={msgId}
         style={{
           maxWidth: "70%",
-          marginBottom: 10,
+          marginBottom: 12,
           alignSelf: isAdmin ? "flex-end" : "flex-start",
-          backgroundColor: isAdmin ? "#d0f0c0" : "#f0f0f0",
-          color: "#222",
-          padding: "12px 16px",
-          borderRadius: 20,
-          boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
+          backgroundColor: isAdmin ? "#d1f7c4" : "#f1f1f1",
+          padding: "10px 15px",
+          borderRadius: 18,
           wordBreak: "break-word",
-          position: "relative",
-          fontSize: 15,
-          lineHeight: 1.3,
+          boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
           display: "flex",
           flexDirection: "column",
         }}
       >
-        <strong style={{ marginBottom: 6 }}>{senderName}</strong>
-        <span>{msg.message}</span>
+        <strong style={{ marginBottom: 4 }}>{senderName}</strong>
+        <span>{msg.message || "(empty)"}</span>
         {timestamp && (
           <small
             style={{
-              fontSize: 11,
-              opacity: 0.6,
-              marginTop: 8,
               alignSelf: "flex-end",
+              fontSize: 11,
+              marginTop: 6,
+              opacity: 0.6,
             }}
           >
             {timestamp}
@@ -185,88 +171,68 @@ export default function AdminChats() {
         display: "flex",
         gap: 20,
         padding: 20,
-        height: "calc(100vh - 40px)",
-        boxSizing: "border-box",
+        height: "100vh",
         backgroundColor: "#f5f7fa",
         fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
       }}
     >
-      {/* Chats List */}
       <div
         style={{
           width: "30%",
-          backgroundColor: "white",
-          borderRadius: 12,
-          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+          backgroundColor: "#fff",
+          borderRadius: 10,
+          boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
           padding: 16,
           display: "flex",
           flexDirection: "column",
         }}
       >
-        <h2 style={{ marginBottom: 20, color: "#333" }}>Chats</h2>
-        {loadingChats && <p>Loading chats...</p>}
-        {error && !loadingChats && (
-          <p style={{ color: "red", fontWeight: "600" }}>{error}</p>
-        )}
+        <h2 style={{ marginBottom: 16 }}>Chats</h2>
+        {loadingChats && <p>Loading chats…</p>}
+        {error && <p style={{ color: "red" }}>{error}</p>}
         {!loadingChats && !error && chats.length === 0 && (
-          <p style={{ color: "#777" }}>No chats found.</p>
+          <p>No chats available.</p>
         )}
-        <div
-          style={{
-            overflowY: "auto",
-            flexGrow: 1,
-            paddingRight: 4,
-          }}
-        >
+        <div style={{ overflowY: "auto", flexGrow: 1 }}>
           {chats.map(renderChatItem)}
         </div>
       </div>
 
-      {/* Messages and Reply */}
       <div
         style={{
           flex: 1,
+          backgroundColor: "#fff",
+          borderRadius: 10,
+          boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
+          padding: 16,
           display: "flex",
           flexDirection: "column",
-          backgroundColor: "white",
-          borderRadius: 12,
-          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-          padding: 16,
         }}
       >
         {selectedChat ? (
           <>
-            <h2 style={{ marginBottom: 16, color: "#333" }}>
-              Messages for Chat:{" "}
-              <span
-                style={{ color: "#007bff", fontWeight: "700" }}
-                title={selectedChat}
-              >
-                {selectedChat}
-              </span>
+            <h2 style={{ marginBottom: 16 }}>
+              Chat:{" "}
+              <span style={{ color: "#007bff" }}>{selectedChat}</span>
             </h2>
             <div
               style={{
                 flexGrow: 1,
                 overflowY: "auto",
-                padding: 10,
                 display: "flex",
                 flexDirection: "column",
-                scrollBehavior: "smooth",
                 backgroundColor: "#fafafa",
                 borderRadius: 8,
                 border: "1px solid #ddd",
+                padding: 12,
               }}
             >
-              {loadingMessages && <p>Loading messages...</p>}
-              {error && !loadingMessages && (
-                <p style={{ color: "red", fontWeight: "600" }}>{error}</p>
-              )}
+              {loadingMessages && <p>Loading messages…</p>}
+              {error && <p style={{ color: "red" }}>{error}</p>}
               {!loadingMessages && messages.length === 0 && (
-                <p style={{ color: "#777" }}>No messages yet.</p>
+                <p>No messages yet.</p>
               )}
-              {!loadingMessages &&
-                messages.map((msg) => renderMessage(msg))}
+              {messages.map(renderMessage)}
               <div ref={messagesEndRef} />
             </div>
 
@@ -274,17 +240,14 @@ export default function AdminChats() {
               rows={3}
               value={reply}
               onChange={(e) => setReply(e.target.value)}
-              placeholder="Type your reply here..."
+              placeholder="Type your reply…"
               style={{
                 marginTop: 12,
                 padding: 12,
-                resize: "vertical",
-                borderRadius: 12,
+                borderRadius: 10,
                 border: "1px solid #ccc",
                 fontSize: 16,
-                fontFamily: "inherit",
-                boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
-                outline: "none",
+                resize: "vertical",
                 width: "100%",
               }}
             />
@@ -293,28 +256,21 @@ export default function AdminChats() {
               onClick={handleSendReply}
               disabled={!reply.trim()}
               style={{
-                marginTop: 12,
-                padding: "12px 20px",
-                borderRadius: 12,
-                border: "none",
-                backgroundColor: reply.trim() ? "#007bff" : "#999",
-                color: "white",
-                fontWeight: "600",
-                cursor: reply.trim() ? "pointer" : "not-allowed",
+                marginTop: 10,
                 alignSelf: "flex-end",
-                minWidth: 120,
-                boxShadow: reply.trim()
-                  ? "0 4px 8px rgba(0,123,255,0.4)"
-                  : "none",
-                transition: "background-color 0.2s ease",
-                userSelect: "none",
+                backgroundColor: reply.trim() ? "#007bff" : "#999",
+                color: "#fff",
+                border: "none",
+                borderRadius: 10,
+                padding: "10px 20px",
+                cursor: reply.trim() ? "pointer" : "not-allowed",
               }}
             >
-              Send Reply
+              Send
             </button>
           </>
         ) : (
-          <p style={{ color: "#777" }}>Select a chat to view messages and reply.</p>
+          <p>Select a chat to see messages and reply.</p>
         )}
       </div>
     </div>
