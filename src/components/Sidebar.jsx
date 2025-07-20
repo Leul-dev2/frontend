@@ -18,6 +18,9 @@ export default function Sidebar() {
         <Link to="/dashboard" className="hover:bg-blue-100 px-4 py-2 rounded transition">
           Dashboard
         </Link>
+         <Link to="/admin-chats" className="hover:bg-blue-100 px-4 py-2 rounded transition">
+          Admin Chats
+        </Link>
         <Link to="/products" className="hover:bg-blue-100 px-4 py-2 rounded transition">
           Products
         </Link>
