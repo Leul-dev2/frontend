@@ -8,6 +8,7 @@ import Orders from "./pages/Orders";
 import Dashboard from "./pages/Dashboard"; // ✅ You forgot to import this
 import ProtectedRoute from './components/ProtectedRoute';
 import CategoryManagement from "./pages/CategoryManagement";
+import NotificationsPage from "./pages/NotificationsPage";
 import AdminChats from "./pages/AdminChats"; // Import the AdminChats component   
 
 function App() {
@@ -26,6 +27,19 @@ function App() {
                 <Sidebar />
                 <div className="flex-1 p-6">
                   <Dashboard />
+                </div>
+              </div>
+            </ProtectedRoute>
+          }
+        />
+             <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <div className="flex min-h-screen">
+                <Sidebar />
+                <div className="flex-1 p-6">
+                  <NotificationsPage/>
                 </div>
               </div>
             </ProtectedRoute>
