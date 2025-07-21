@@ -14,7 +14,7 @@ export async function markNotificationAsRead(userId, notificationId) {
 
 export async function sendNotificationToAll(title, message, idToken) {
   const res = await axios.post(
-    `${BASE_URL}/send-to-all`,
+    `${BASE_URL}/admin/send-to-all`,  // ✅ MUST match your backend route
     { title, message },
     {
       headers: {
