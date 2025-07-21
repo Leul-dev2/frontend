@@ -3,7 +3,8 @@ import axios from "axios";
 
 // Make sure .env has no spaces! Example:
 // REACT_APP_API_URL=https://backend-ecomm-jol4.onrender.com/api
-const BASE_URL = process.env.REACT_APP_API_URL;
+const BASE_URL = import.meta.env.VITE_API_URL;
+
 console.log("✅ Using BASE_URL:", BASE_URL);
 
 export const fetchAllChats = async () => {
