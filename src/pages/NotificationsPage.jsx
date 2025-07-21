@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { fetchNotifications, markNotificationAsRead } from './notificationApi';
+import { fetchNotifications, markNotificationAsRead } from '..api/notificationApi';
 
 export default function NotificationsPage({ userId }) {
   const [notifications, setNotifications] = useState([]);
