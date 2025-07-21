@@ -1,7 +1,7 @@
-// api/notificationApi.js
 import axios from 'axios';
 
-const BASE_URL = process.env.REACT_APP_API_URL;
+const BASE_URL = process.env.REACT_APP_API_URL; // e.g. https://backend-ecomm-jol4.onrender.com/api
+
 export async function fetchNotifications(userId) {
   const res = await axios.get(`${BASE_URL}/${userId}`);
   return res.data;

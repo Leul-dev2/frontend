@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { fetchNotifications, markNotificationAsRead, sendNotificationToAll } from '../api/notificationApi';
+import {
+  fetchNotifications,
+  markNotificationAsRead,
+  sendNotificationToAll,
+} from '../api/notificationApi';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 export default function NotificationsPage() {
@@ -11,7 +15,6 @@ export default function NotificationsPage() {
   const [message, setMessage] = useState('');
   const [status, setStatus] = useState('');
 
-  // Listen for auth state and check admin claim
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, async (usr) => {
@@ -27,7 +30,6 @@ export default function NotificationsPage() {
     return unsubscribe;
   }, []);
 
-  // Fetch notifications when user changes
   useEffect(() => {
     if (!user) {
       setLoading(false);
@@ -82,13 +84,13 @@ export default function NotificationsPage() {
             type="text"
             placeholder="Title"
             value={title}
-            onChange={e => setTitle(e.target.value)}
+            onChange={(e) => setTitle(e.target.value)}
             style={{ display: 'block', marginBottom: 8, width: '300px' }}
           />
           <textarea
             placeholder="Message"
             value={message}
-            onChange={e => setMessage(e.target.value)}
+            onChange={(e) => setMessage(e.target.value)}
             style={{ display: 'block', marginBottom: 8, width: '300px', height: '100px' }}
           />
           <button onClick={handleSend}>Send</button>
