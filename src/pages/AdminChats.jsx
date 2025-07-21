@@ -1,3 +1,4 @@
+// ✅ src/components/AdminChats.jsx
 import React, { useEffect, useState, useRef } from "react";
 import {
   fetchAllChats,
@@ -87,6 +88,10 @@ export default function AdminChats() {
   const formatTimestamp = (ts) => {
     if (!ts) return "";
     const date = new Date(ts);
+    if (isNaN(date.getTime())) {
+      console.warn("⚠️ Invalid date:", ts);
+      return "";
+    }
     return date.toLocaleString([], {
       hour: "2-digit",
       minute: "2-digit",
@@ -129,7 +134,7 @@ export default function AdminChats() {
     const msgId = msg.id || msg._id || "unknown_msg_id";
     const isAdmin = msg.senderId === "admin";
     const senderName = isAdmin ? "Admin" : msg.senderName || "User";
-    const timestamp = msg.createdAt ? formatTimestamp(msg.createdAt) : "";
+    const timestamp = formatTimestamp(msg.createdAt);
 
     return (
       <div
