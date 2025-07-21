@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:5000/notifications'; // Your backend URL
+const BASE_URL = process.env.REACT_APP_API_URL; // Your backend URL
 
 export async function fetchNotifications(userId) {
   const res = await axios.get(`${BASE_URL}/${userId}`);
