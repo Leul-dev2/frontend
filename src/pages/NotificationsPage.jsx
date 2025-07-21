@@ -1,72 +1,59 @@
-import React, { useEffect, useState } from 'react';
-import { fetchNotifications, markNotificationAsRead } from '../api/notificationApi';
+import React, { useState } from 'react';
+import axios from 'axios';
+import { getAuth } from 'firebase/auth';
 
-export default function NotificationsPage({ userId }) {
-  const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function NotificationsPage() {
+  const [title, setTitle] = useState('');
+  const [message, setMessage] = useState('');
+  const [status, setStatus] = useState('');
 
- useEffect(() => {
-  async function loadNotifications() {
-    console.log('🔵 useEffect running, userId:', userId);
-    setLoading(true);
+  async function handleSend() {
     try {
-      const data = await fetchNotifications(userId);
-      console.log('🟢 Notifications data received:', data);
-      setNotifications(data);
-    } catch (e) {
-      console.error('🔴 Error loading notifications in component:', e);
-    } finally {
-      setLoading(false);
-    }
-  }
+      setStatus('Sending...');
 
-  if (!userId) {
-    console.log('🟡 No userId, skipping fetch');
-    return;
-  }
-  loadNotifications();
-}, [userId]);
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) throw new Error('Not logged in');
 
+      const idToken = await user.getIdToken();
 
-  async function handleMarkRead(notificationId) {
-    try {
-      await markNotificationAsRead(userId, notificationId);
-      setNotifications((prev) =>
-        prev.map((notif) =>
-          notif.id === notificationId ? { ...notif, isRead: true } : notif
-        )
+      await axios.post(
+        `${process.env.REACT_APP_API_URL}/notifications/send-to-all`,
+        { title, message },
+        {
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+          },
+        }
       );
-    } catch (e) {
-      console.error('Error marking notification as read:', e);
+
+      setStatus('✅ Sent to all users!');
+      setTitle('');
+      setMessage('');
+    } catch (err) {
+      console.error(err);
+      setStatus('❌ Failed to send.');
     }
   }
-
-  if (loading) return <p>Loading notifications...</p>;
-
-  if (notifications.length === 0) return <p>No notifications available.</p>;
 
   return (
-    <div>
-      <h2>Notifications</h2>
-      <ul style={{ listStyle: 'none', padding: 0 }}>
-        {notifications.map((notif) => (
-          <li
-            key={notif.id}
-            onClick={() => handleMarkRead(notif.id)}
-            style={{
-              marginBottom: 12,
-              padding: 10,
-              borderRadius: 8,
-              backgroundColor: notif.isRead ? '#f0f0f0' : '#d0ebff',
-              cursor: 'pointer',
-            }}
-          >
-            <strong>{notif.title}</strong>
-            <p>{notif.message}</p>
-            <small>{new Date(notif.timestamp).toLocaleString()}</small>
-          </li>
-        ))}
-      </ul>
+    <div style={{ maxWidth: 500, margin: 'auto' }}>
+      <h2>Admin: Send Notification To All Users</h2>
+      <input
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        placeholder="Notification Title"
+        style={{ display: 'block', marginBottom: 8, width: '100%' }}
+      />
+      <textarea
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        placeholder="Notification Message"
+        rows="4"
+        style={{ display: 'block', marginBottom: 8, width: '100%' }}
+      />
+      <button onClick={handleSend}>Send To All</button>
+      <p>{status}</p>
     </div>
   );
 }
