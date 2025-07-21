@@ -1,27 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import { fetchNotifications, markNotificationAsRead } from '../api/notificationApi';
 
-
 export default function NotificationsPage({ userId }) {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    async function loadNotifications() {
+      setLoading(true);
+      try {
+        const data = await fetchNotifications(userId);
+        setNotifications(data);
+      } catch (e) {
+        console.error('Error loading notifications:', e);
+      } finally {
+        setLoading(false);
+      }
+    }
+
     if (!userId) return;
     loadNotifications();
   }, [userId]);
-
-  async function loadNotifications() {
-    setLoading(true);
-    try {
-      const data = await fetchNotifications(userId);
-      setNotifications(data);
-    } catch (e) {
-      console.error('Error loading notifications:', e);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   async function handleMarkRead(notificationId) {
     try {
@@ -38,8 +37,7 @@ export default function NotificationsPage({ userId }) {
 
   if (loading) return <p>Loading notifications...</p>;
 
-  if (notifications.length === 0)
-    return <p>No notifications available.</p>;
+  if (notifications.length === 0) return <p>No notifications available.</p>;
 
   return (
     <div>
