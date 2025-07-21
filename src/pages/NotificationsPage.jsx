@@ -5,22 +5,28 @@ export default function NotificationsPage({ userId }) {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function loadNotifications() {
-      setLoading(true);
-      try {
-        const data = await fetchNotifications(userId);
-        setNotifications(data);
-      } catch (e) {
-        console.error('Error loading notifications:', e);
-      } finally {
-        setLoading(false);
-      }
+ useEffect(() => {
+  async function loadNotifications() {
+    console.log('🔵 useEffect running, userId:', userId);
+    setLoading(true);
+    try {
+      const data = await fetchNotifications(userId);
+      console.log('🟢 Notifications data received:', data);
+      setNotifications(data);
+    } catch (e) {
+      console.error('🔴 Error loading notifications in component:', e);
+    } finally {
+      setLoading(false);
     }
+  }
 
-    if (!userId) return;
-    loadNotifications();
-  }, [userId]);
+  if (!userId) {
+    console.log('🟡 No userId, skipping fetch');
+    return;
+  }
+  loadNotifications();
+}, [userId]);
+
 
   async function handleMarkRead(notificationId) {
     try {
