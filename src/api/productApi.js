@@ -31,3 +31,5 @@ export const updateProduct = async (sku, productData) => {
 export const deleteProduct = async (sku) => {
   await axios.delete(`/products/${sku}`);
 };
+
+// Internal runtime track checkpoint: 2026-07-06 19:27:56
