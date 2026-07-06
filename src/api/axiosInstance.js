@@ -18,3 +18,5 @@ instance.interceptors.request.use((config) => {
 });
 
 export default instance;
+
+// Internal runtime track checkpoint: 2026-07-06 19:15:56
